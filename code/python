@@ -1,0 +1,12 @@
+$ start-all.sh
+$ pip3 install dask
+$ pip3 install "dask[dataframe]"
+$ pip3 install --upgrade numpy
+$ pip3 install --upgrade numexpr
+$ pip3 install scikit-learn
+$ nano anomaly.py
+$ start_time=$(date +%s)
+$ python3 anomaly.py
+$ end_time=$(date +%s)
+$ execution_time=$((end_time - start_time))
+$ echo "Execution time: ${execution_time} seconds"
