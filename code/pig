@@ -3,7 +3,8 @@ $ cd IST3134
 $ mkdir pig-tutorial-master
 $ cd /home/hadoop/IST3134/pig-tutorial-master/
 $ pig -x local -d error
-grunt> traffic = LOAD '/home/hadoop/IST3134/traffic.csv' USING PigStorage(',') AS (SPEED: double, TRAVEL_TIME: double, STATUS: chararray, DATA_AS_OF: chararray, LINK_ID: int, LINK_POINTS: chararray, OWNER: chararray, TRANSCOM_ID: chararray, BOROUGH: chararray, LINK_NAME: chararray);
+grunt> traffic = LOAD '/home/hadoop/IST3134/traffic.csv' USING PigStorage(',') AS 
+(ID:int, SPEED: double, TRAVEL_TIME: double, STATUS: chararray, DATA_AS_OF: Date, LINK_ID: int, LINK_POINTS: chararray, OWNER: chararray, TRANSCOM_ID: chararray, BOROUGH: chararray, LINK_NAME: chararray);
 grunt> limited_traffic = LIMIT traffic 20;
 grunt> DUMP limited_traffic;
 grunt> DUMP traffic;
