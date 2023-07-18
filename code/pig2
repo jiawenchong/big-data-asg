@@ -1,0 +1,72 @@
+-- Load the traffic data from CSV file
+traffic = LOAD 'traffic.csv' USING PigStorage(',') AS (
+    ID: int,
+    SPEED: float,
+    TRAVEL_TIME: int,
+    STATUS: int,
+    DATA_AS_OF: chararray,
+    LINK_ID: chararray,
+    LINK_POINTS: chararray,
+    OWNER: chararray,
+    TRANSCOM_ID: int,
+    BOROUGH: chararray,
+    LINK_NAME: chararray
+);
+
+-- Filter and project the relevant columns for anomaly detection
+speed_travel_time = FOREACH traffic GENERATE SPEED, TRAVEL_TIME;
+
+-- Calculate mean for SPEED
+speed_mean = FOREACH (GROUP speed_travel_time ALL) GENERATE AVG(speed_travel_time.SPEED) AS avg_speed;
+
+-- Calculate standard deviation for SPEED
+speed_std = FOREACH (GROUP speed_travel_time ALL) {
+    squared_diff = FOREACH speed_travel_time GENERATE (SPEED - speed_mean.avg_speed) * (SPEED - speed_mean.avg_speed) AS diff_squared;
+    GENERATE SQRT(AVG(squared_diff.diff_squared)) AS std_speed;
+}
+
+-- Calculate mean for TRAVEL_TIME
+travel_time_mean = FOREACH (GROUP speed_travel_time ALL) GENERATE AVG(speed_travel_time.TRAVEL_TIME) AS avg_travel_time;
+
+-- Calculate standard deviation for TRAVEL_TIME
+travel_time_std = FOREACH (GROUP speed_travel_time ALL) {
+    squared_diff = FOREACH speed_travel_time GENERATE (TRAVEL_TIME - travel_time_mean.avg_travel_time) * (TRAVEL_TIME - travel_time_mean.avg_travel_time) AS diff_squared;
+    GENERATE SQRT(AVG(squared_diff.diff_squared)) AS std_travel_time;
+}
+
+-- Cross join to get the mean and standard deviation values
+stats_cross = CROSS FLATTEN(speed_mean), FLATTEN(speed_std), FLATTEN(travel_time_mean), FLATTEN(travel_time_std);
+
+stats_cross = CROSS speed_mean, speed_std, travel_time_mean, travel_time_std AS (mean_speed:float, std_speed:float, mean_travel_time:float, std_travel_time:float);
+
+-- Flatten the cross-joined result
+stats = FOREACH stats_cross GENERATE
+    speed_mean::avg_speed AS avg_speed,
+    speed_std::std_speed AS std_speed,
+    travel_time_mean::avg_travel_time AS avg_travel_time,
+    travel_time_std::std_travel_time AS std_travel_time;
+
+-- Standardize the data (subtract mean and divide by standard deviation)
+speed_travel_time_std = FOREACH speed_travel_time GENERATE
+    (SPEED - stats.avg_speed) / stats.std_speed AS SPEED_STD,
+    (TRAVEL_TIME - stats.avg_travel_time) / stats.std_travel_time AS TRAVEL_TIME_STD;
+
+-- Convert the data to a bag
+speed_travel_time_bag = FOREACH speed_travel_time_std GENERATE TOTUPLE(SPEED_STD, TRAVEL_TIME_STD) AS data;
+
+-- Run LOF algorithm to detect anomalies
+lof_result = FOREACH speed_travel_time_bag GENERATE
+    data,
+    FLATTEN(LOF('speed_travel_time_bag', 'data', 'k', 'LOF')) AS lof_score;
+
+-- Filter out anomalies based on LOF score threshold
+anomalies = FILTER lof_result BY lof_score > <your_threshold>;
+
+-- Join the anomalies back with the original traffic data
+anomalies_with_traffic = JOIN anomalies BY data, traffic BY (SPEED, TRAVEL_TIME);
+
+-- Store the anomalies in a separate file
+STORE anomalies_with_traffic INTO 'anomalies.csv' USING PigStorage(',');
+
+-- Display the anomalies
+DUMP anomalies_with_traffic;
