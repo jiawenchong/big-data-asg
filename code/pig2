@@ -58,6 +58,7 @@ grunt> speed_travel_time_bag = FOREACH speed_travel_time_std GENERATE TOTUPLE(SP
 
 ----duplicate another new session
 ----run the Python code in the Hadoop cluster
+$ pip install sklearn
 
 
 
