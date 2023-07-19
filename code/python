@@ -1,12 +1,31 @@
-$ start-all.sh
-$ pip3 install dask
-$ pip3 install "dask[dataframe]"
-$ pip3 install --upgrade numpy
-$ pip3 install --upgrade numexpr
-$ pip3 install scikit-learn
-$ nano anomaly.py
-$ start_time=$(date +%s)
-$ python3 anomaly.py
-$ end_time=$(date +%s)
-$ execution_time=$((end_time - start_time))
-$ echo "Execution time: ${execution_time} seconds"
+import csv
+from sklearn.neighbors import LocalOutlierFactor
+
+# Specify the input file path
+input_file = '/home/hadoop/IST3134/preprocessed_data.csv/part-m-00000'
+
+# Specify the output file path
+output_file = '/home/hadoop/IST3134/outputpig.csv'
+
+data = []
+
+with open(input_file, 'r') as csvfile:
+    reader = csv.reader(csvfile)
+    for record in reader:
+        speed = float(record[0].replace('(', '').replace(')', ''))
+        travel_time = float(record[1].replace('(', '').replace(')', ''))
+        data.append([speed, travel_time])
+
+# Run the LOF algorithm on the data
+lof = LocalOutlierFactor(n_neighbors=5)
+lof_scores = lof.fit_predict(data)
+
+# Generate the LOF scores
+results = []
+for i, score in enumerate(lof_scores):
+    results.append([data[i][0], data[i][1], score])
+
+# Write results to CSV file
+with open(output_file, 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerows(results)
