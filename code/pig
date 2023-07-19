@@ -98,6 +98,10 @@ $ end_time=$(date +%s)
 $ execution_time=$((end_time - start_time))
 $ echo "Execution time: ${execution_time} seconds"
 
+$cd IST3134/preprocessed_data.csv
+$ cat part-m-00000 | less
+$ cat part-m-00001 | less
+
 -----in pig
 -- Load the results from the output file
 anomalies = LOAD '/home/hadoop/IST3134/outputpig.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
@@ -112,5 +116,6 @@ STORE anomalies_with_traffic INTO 'anomalies1.csv' USING PigStorage(',');
 DUMP anomalies_with_traffic;
 
 -back to the terminal
-$ hadoop fs -cat /home/hadoop/IST3134/anomalies1.csv/part-r-00000 | less
-$ hadoop fs -cat /home/hadoop/IST3134/anomalies1.csv/part-r-00001 | less
+$ cd IST3134/anomalies1.csv
+$ cat part-r-00000 | less
+$ cat part-r-00001 | less
