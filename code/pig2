@@ -98,16 +98,19 @@ $ end_time=$(date +%s)
 $ execution_time=$((end_time - start_time))
 $ echo "Execution time: ${execution_time} seconds"
 
-
 -----in pig
 -- Load the results from the output file
-anomalies = LOAD '/home/hadoop/IST3134/pigoutput1.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
+anomalies = LOAD '/home/hadoop/IST3134/outputpig.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
 
 -- Join the anomalies back with the original traffic data
-anomalies_with_traffic = JOIN anomalies BY data, traffic BY (SPEED, TRAVEL_TIME);
+anomalies_with_traffic = JOIN anomalies BY (SPEED, TRAVEL_TIME), traffic BY (SPEED, TRAVEL_TIME);
 
 -- Store the anomalies in a separate file
 STORE anomalies_with_traffic INTO 'anomalies1.csv' USING PigStorage(',');
 
 -- Display the anomalies
 DUMP anomalies_with_traffic;
+
+-back to the terminal
+$ hadoop fs -cat /home/hadoop/IST3134/anomalies1.csv/part-r-00000 | less
+$ hadoop fs -cat /home/hadoop/IST3134/anomalies1.csv/part-r-00001 | less
