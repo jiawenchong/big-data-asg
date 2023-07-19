@@ -62,6 +62,38 @@ $ pip install sklearn
 $ start_time=$(date +%s)
 $ nano lof.py
 $ python3 lof.py
+import csv
+from sklearn.neighbors import LocalOutlierFactor
+
+# Specify the input file path
+input_file = '/home/hadoop/IST3134/preprocessed_data.csv/part-m-00000'
+
+# Specify the output file path
+output_file = '/home/hadoop/IST3134/outputpig.csv'
+
+data = []
+
+with open(input_file, 'r') as csvfile:
+    reader = csv.reader(csvfile)
+    for record in reader:
+        speed = float(record[0].replace('(', '').replace(')', ''))
+        travel_time = float(record[1].replace('(', '').replace(')', ''))
+        data.append([speed, travel_time])
+
+# Run the LOF algorithm on the data
+lof = LocalOutlierFactor(n_neighbors=5)
+lof_scores = lof.fit_predict(data)
+
+# Generate the LOF scores
+results = []
+for i, score in enumerate(lof_scores):
+    results.append([data[i][0], data[i][1], score])
+
+# Write results to CSV file
+with open(output_file, 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerows(results)
+
 $ end_time=$(date +%s)
 $ execution_time=$((end_time - start_time))
 $ echo "Execution time: ${execution_time} seconds"
@@ -69,13 +101,13 @@ $ echo "Execution time: ${execution_time} seconds"
 
 -----in pig
 -- Load the results from the output file
-anomalies = LOAD '/home/hadoop/IST3134/pigoutput.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
+anomalies = LOAD '/home/hadoop/IST3134/pigoutput1.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
 
 -- Join the anomalies back with the original traffic data
 anomalies_with_traffic = JOIN anomalies BY data, traffic BY (SPEED, TRAVEL_TIME);
 
 -- Store the anomalies in a separate file
-STORE anomalies_with_traffic INTO 'anomalies.csv' USING PigStorage(',');
+STORE anomalies_with_traffic INTO 'anomalies1.csv' USING PigStorage(',');
 
 -- Display the anomalies
 DUMP anomalies_with_traffic;
