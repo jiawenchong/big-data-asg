@@ -1,0 +1,44 @@
+import csv
+import sys
+from sklearn.neighbors import LocalOutlierFactor
+
+data = []
+
+# Read data from Hadoop's input
+for line in sys.stdin:
+    record = line.strip().split(',')
+    speed = float(record[1])
+    travel_time = float(record[2])
+    data.append([speed, travel_time])
+
+# Run the LOF algorithm on the data
+lof = LocalOutlierFactor(n_neighbors=5)
+lof_scores = lof.fit_predict(data)
+
+# Generate the LOF scores and write results to Hadoop's output
+for i, score in enumerate(lof_scores):
+    result = f"{data[i][0]},{data[i][1]},{score}"
+    print(result)
+
+wget https://archive.apache.org/dist/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
+#!/bin/bash
+
+# Specify the input file path in HDFS
+input_path="/home/hadoop/IST3134/traffic.csv"
+
+# Specify the output directory path in HDFS
+output_path="/user/hadoop/IST3134/mppyresults"
+
+# Specify the Python script name
+python_script="lofmp.py"
+
+# Specify the path to Hadoop Streaming JAR
+hadoop_streaming_jar="/home/hadoop/IST3134/workspace/hadoop-streaming-3.2.2.jar"
+
+# Run the Hadoop Streaming job
+hadoop jar $hadoop_streaming_jar \
+    -files $python_script \
+    -mapper "python3 $python_script" \
+    -reducer "cat" \
+    -input $input_path \
+    -output $output_path
