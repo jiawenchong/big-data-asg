@@ -7,9 +7,8 @@ $ cd ~
 $ hadoop fs -mkdir -p /home/hadoop/IST3134/dataset
 $ cd workspace
 $ hadoop fs -put traffic.csv /home/hadoop/IST3134/dataset
-$ cd ~/workspace/wordcount/src
-$ ls
 $ cd ~/workspace/lof/src
+$ ls
 $ hadoop classpath
 $ touch anomalydetection.java
 $ javac anomalydetect.java
