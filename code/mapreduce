@@ -10,8 +10,9 @@ $ hadoop fs -put traffic.csv /home/hadoop/IST3134/dataset
 $ cd ~/workspace/lof/src
 $ ls
 $ hadoop classpath
+$ nano anomalydetection.java
 $ touch anomalydetection.java
-$ javac anomalydetect.java
+$ javac anomalydetection.java
 $ start_time=$(date +%s)
 $ hadoop jar lofanomaly.jar LOFAnomalyDetection /user/hadoop/IST3134/dataset/traffic.csv /user/hadoop/IST3134/results
 $ end_time=$(date +%s)
