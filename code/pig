@@ -15,23 +15,6 @@ traffic = LOAD '/home/hadoop/IST3134/traffic.csv' USING PigStorage(',') AS (
     LINK_NAME: chararray
 );
 
-traffic_display = FOREACH traffic GENERATE CONCAT('ID: ', (chararray)ID), 
-                                        CONCAT('SPEED: ', (chararray)SPEED),
-                                        CONCAT('TRAVEL_TIME: ', (chararray)TRAVEL_TIME),
-                                        CONCAT('STATUS: ', (chararray)STATUS),
-                                        CONCAT('DATA_AS_OF: ', DATA_AS_OF),
-                                        CONCAT('LINK_ID: ', LINK_ID),
-                                        CONCAT('OWNER: ', OWNER),
-                                        CONCAT('TRANSCOM_ID: ', (chararray)TRANSCOM_ID),
-                                        CONCAT('BOROUGH: ', BOROUGH),
-                                        CONCAT('LINK_NAME: ', LINK_NAME);
-
--- Limit the display to the first 10 rows
-limited_display = LIMIT traffic_display 5;
-
--- Display the first 10 rows of the 'limited_display' relation
-DUMP limited_display;
-
 -- Filter and project the relevant columns for anomaly detection
 grunt> speed_travel_time = FOREACH traffic GENERATE SPEED, TRAVEL_TIME;
 
