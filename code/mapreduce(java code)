@@ -141,34 +141,3 @@ public class LOFAnomalyDetection {
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
-------
-    // Configure and submit the MapReduce job
-public static void main(String[] args) throws Exception {
-    Configuration conf = new Configuration();
-
-    // Set distance measure and k parameter in the configuration
-    conf.set("lof.distanceMeasure", "euclidean");
-    conf.setInt("lof.k", 5);
-
-    // Adjust data split size
-    conf.set("mapreduce.input.fileinputformat.split.maxsize", "256000000"); // Set split size to 256 MB
-
-    Job job = Job.getInstance(conf, "LOF Anomaly Detection");
-    job.setJarByClass(LOFAnomalyDetection.class);
-    job.setMapperClass(LOFMapper.class);
-    job.setReducerClass(LOFReducer.class);
-    job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(Text.class);
-
-    // Increase the number of reducers
-    job.setNumReduceTasks(10); // Set the number of reducers to 10 (adjust this value as needed)
-
-    // Set the combiner class if using a combiner
-    // job.setCombinerClass(LOFCombiner.class);
-
-    FileInputFormat.addInputPath(job, new Path(args[0]));
-    FileOutputFormat.setOutputPath(job, new Path(args[1]));
-
-    System.exit(job.waitForCompletion(true) ? 0 : 1);
-}
-}
