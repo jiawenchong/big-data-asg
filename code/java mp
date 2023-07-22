@@ -74,13 +74,23 @@ public class LOFAnomalyDetection {
             }
         }
 
-        private double calculateDistance(DataPoint point1, DataPoint point2, String distanceMeasure) {
-            // Implement the distance calculation based on the chosen distance measure (e.g., Euclidean)
-            // You may refer to the DataPoint class for the available attributes and methods
-            // Return the distance between the two points
+   private double calculateDistance(DataPoint point1, DataPoint point2, String distanceMeasure) {
+        // Implement the distance calculation based on the chosen distance measure (e.g., Euclidean)
+
+        // Calculate Euclidean distance:
+        if (distanceMeasure.equals("euclidean")) {
+            return calculateEuclideanDistance(point1, point2);
         }
+
+        throw new IllegalArgumentException("Invalid distance measure: " + distanceMeasure);
     }
 
+    private double calculateEuclideanDistance(DataPoint point1, DataPoint point2) {
+        double diffTravelTime = point1.getTravelTime() - point2.getTravelTime();
+        double diffSpeed = point1.getSpeed() - point2.getSpeed();
+        return Math.sqrt(diffTravelTime * diffTravelTime + diffSpeed * diffSpeed);
+    }
+}
     public static class DataPoint {
         private double travelTime;
         private double speed;
