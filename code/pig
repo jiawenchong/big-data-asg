@@ -87,3 +87,54 @@ DUMP anomalies_with_traffic;
 $ cd IST3134/anomalies1.csv
 $ cat part-r-00000 | less
 $ cat part-r-00001 | less
+
+-----
+-- Load the results from the output file containing filtered anomalies
+anomalies = LOAD '/home/hadoop/IST3134/outputpig.csv' USING PigStorage(',') AS (SPEED: float, TRAVEL_TIME: int, LOF_SCORE: double);
+
+-- Load the original traffic data with borough information
+traffic = LOAD '/home/hadoop/IST3134/dataset/newtraffic.csv' USING PigStorage(',') AS (
+    ID: int,
+    SPEED: float,
+    TRAVEL_TIME: int,
+    STATUS: int,
+    DATA_AS_OF: chararray,
+    LINK_ID: chararray,
+    OWNER: chararray,
+    TRANSCOM_ID: int,
+    BOROUGH: chararray, 
+    LINK_NAME: chararray
+);
+
+traffic_display = FOREACH traffic GENERATE CONCAT('ID: ', (chararray)ID), 
+                                        CONCAT('SPEED: ', (chararray)SPEED),
+                                        CONCAT('TRAVEL_TIME: ', (chararray)TRAVEL_TIME),
+                                        CONCAT('STATUS: ', (chararray)STATUS),
+                                        CONCAT('DATA_AS_OF: ', DATA_AS_OF),
+                                        CONCAT('LINK_ID: ', LINK_ID),
+                                        CONCAT('OWNER: ', OWNER),
+                                        CONCAT('TRANSCOM_ID: ', (chararray)TRANSCOM_ID),
+                                        CONCAT('BOROUGH: ', BOROUGH),
+                                        CONCAT('LINK_NAME: ', LINK_NAME);
+
+-- Limit the display to the first 10 rows
+limited_display = LIMIT traffic_display 10;
+
+-- Display the first 10 rows of the 'limited_display' relation
+DUMP limited_display;
+
+-- Join the anomalies back with the original traffic data based on SPEED and TRAVEL_TIME columns
+anomalies_with_traffic = JOIN anomalies BY (SPEED, TRAVEL_TIME), traffic BY (SPEED, TRAVEL_TIME);
+
+-- Project the desired columns in the output relation (including the BOROUGH column)
+anomalies_with_borough = FOREACH anomalies_with_traffic GENERATE anomalies::SPEED AS SPEED,
+                                                           anomalies::TRAVEL_TIME AS TRAVEL_TIME,
+                                                           anomalies::LOF_SCORE AS LOF_SCORE,
+                                                           traffic::BOROUGH AS BOROUGH;
+
+-- Store the anomalies with borough information in a separate file
+STORE anomalies_with_borough INTO 'anomalies_with_borough.csv' USING PigStorage(',');
+
+-- Display the limited anomalies with borough information (only 50 rows)
+limited_anomalies = LIMIT anomalies_with_borough 50;
+DUMP limited_anomalies;
