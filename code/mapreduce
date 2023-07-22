@@ -10,10 +10,10 @@ $ hadoop fs -put traffic.csv /home/hadoop/IST3134/dataset
 $ cd ~/workspace/lof/src
 $ ls
 $ hadoop classpath
-$ nano anomalydetection.java
+$ nano LOFAnomalyDetection.java
 $ javac LOFAnomalyDetection.java
 $ start_time=$(date +%s)
-$ hadoop jar lofanomaly.jar LOFAnomalyDetection /user/hadoop/IST3134/dataset/traffic.csv /user/hadoop/IST3134/results
+$ hadoop jar lofanomaly.jar LOFAnomalyDetection /user/hadoop/IST3134/dataset/traffic.csv /user/hadoop/IST3134/mpresult
 $ end_time=$(date +%s)
 $ execution_time=$((end_time - start_time))
 $ echo "Execution time: ${execution_time} seconds"
