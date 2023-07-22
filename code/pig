@@ -2,7 +2,7 @@ $ start-all.sh
 $ cd IST3134
 $ pig -x local -d error
 
-traffic = LOAD '/home/hadoop/IST3134/traffic.csv' USING PigStorage(',') AS (
+traffic = LOAD '/home/hadoop/IST3134/dataset/traffic.csv' USING PigStorage(',') AS (
     ID: int,
     SPEED: float,
     TRAVEL_TIME: int,
