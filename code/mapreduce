@@ -12,12 +12,19 @@ $ ls
 $ hadoop classpath
 $ nano LOFAnomalyDetection.java
 $ javac LOFAnomalyDetection.java
+jar cf lofanomaly.jar LOFAnomalyDetection*.class
+
 $ start_time=$(date +%s)
 $ hadoop jar lofanomaly.jar LOFAnomalyDetection /user/hadoop/IST3134/dataset/traffic.csv /user/hadoop/IST3134/mpresult
+hadoop jar lofanomaly.jar LOFAnomalyDetection /user/hadoop/IST3134/dataset/traffic.csv /user/hadoop/IST3134/mpresult
+hadoop jar lofanomaly.jar LOFAnomalyDetection /home/hadoop/IST3134/dataset/traffic.csv /home/hadoop/IST3134/mpresult2
+
 $ end_time=$(date +%s)
 $ execution_time=$((end_time - start_time))
 $ echo "Execution time: ${execution_time} seconds"
+
 $ jar cf lofanomaly.jar LOFAnomalyDetection$LOFMapper.class LOFAnomalyDetection$LOFReducer.class
-$ hadoop fs -ls output
-$ hadoop fs -cat output/part-r-00000 | less
+$ hadoop fs -ls mpresult2
+$ hadoop fs -cat mpresult2/part-r-00000 | less
 $ hadoop fs -rm -r output
+hadoop fs -rm -r /user/hadoop/IST3134/mpresult
