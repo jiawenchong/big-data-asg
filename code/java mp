@@ -1,0 +1,111 @@
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class LOFAnomalyDetection {
+
+    public static class LOFMapper extends Mapper<Object, Text, Text, Text> {
+        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+            String line = value.toString();
+            String[] parts = line.split(",");
+            if (parts.length >= 3) {
+                String linkId = parts[0].trim();
+                String travelTime = parts[1].trim();
+                String speed = parts[2].trim();
+                Text outputKey = new Text(linkId); // Set link_id as the output key
+                Text outputValue = new Text(travelTime + "," + speed);
+                context.write(outputKey, outputValue);
+            }
+        }
+    }
+
+    public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
+        private List<DataPoint> dataPoints = new ArrayList<>();
+
+        @Override
+        protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            for (Text value : values) {
+                String[] parts = value.toString().split(",");
+                if (parts.length == 2) {
+                    double travelTime = Double.parseDouble(parts[0]);
+                    double speed = Double.parseDouble(parts[1]);
+                    DataPoint dataPoint = new DataPoint(travelTime, speed);
+                    dataPoints.add(dataPoint);
+                }
+            }
+        }
+
+        @Override
+        protected void cleanup(Context context) throws IOException, InterruptedException {
+            Configuration conf = context.getConfiguration();
+            int k = conf.getInt("lof.k", 5);
+            String distanceMeasure = conf.get("lof.distanceMeasure", "euclidean");
+
+            for (DataPoint dataPoint : dataPoints) {
+                List<Double> distances = new ArrayList<>();
+                for (DataPoint otherPoint : dataPoints) {
+                    if (!dataPoint.equals(otherPoint)) {
+                        double distance = calculateDistance(dataPoint, otherPoint, distanceMeasure);
+                        distances.add(distance);
+                    }
+                }
+
+                Collections.sort(distances);
+                double kDistance = distances.get(k - 1);
+                double localReachDensity = 1.0 / kDistance;
+
+                double lrdSum = 0.0;
+                for (int i = 0; i < k; i++) {
+                    lrdSum += distances.get(i);
+                }
+
+                double lof = (lrdSum / (k * kDistance)) * localReachDensity;
+                context.write(new Text(dataPoint.toString()), new Text(Double.toString(lof)));
+            }
+        }
+
+        private double calculateDistance(DataPoint point1, DataPoint point2, String distanceMeasure) {
+            // Implement the distance calculation based on the chosen distance measure (e.g., Euclidean)
+            // You may refer to the DataPoint class for the available attributes and methods
+            // Return the distance between the two points
+        }
+    }
+
+    public static class DataPoint {
+        private double travelTime;
+        private double speed;
+
+        public DataPoint(double travelTime, double speed) {
+            this.travelTime = travelTime;
+            this.speed = speed;
+        }
+
+        public double getTravelTime() {
+            return travelTime;
+        }
+
+        public double getSpeed() {
+            return speed;
+        }
+
+        @Override
+        public String toString() {
+            return travelTime + "," + speed;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        // The main method remains the same as before
+        // ...
+    }
+}
