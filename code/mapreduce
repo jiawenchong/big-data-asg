@@ -11,7 +11,7 @@ $ cd ~/workspace/lof/src
 $ ls
 $ hadoop classpath
 $ nano LOFAnomalyDetection.java
-$ javac LOFAnomalyDetection.java
+$ javac -classpath $(hadoop classpath) LOFAnomalyDetection.java
 jar cf lofanomaly.jar LOFAnomalyDetection*.class
 
 $ start_time=$(date +%s)
