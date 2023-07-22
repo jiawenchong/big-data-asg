@@ -12,12 +12,10 @@ $ ls
 $ hadoop classpath
 $ nano LOFAnomalyDetection.java
 $ javac -classpath $(hadoop classpath) LOFAnomalyDetection.java
-jar cf lofanomaly.jar LOFAnomalyDetection*.class
+$ jar cf lofanomaly.jar LOFAnomalyDetection*.class
 
 $ start_time=$(date +%s)
-$ hadoop jar lofanomaly.jar LOFAnomalyDetection /user/hadoop/IST3134/dataset/traffic.csv /user/hadoop/IST3134/mpresult
-hadoop jar lofanomaly.jar LOFAnomalyDetection /user/hadoop/IST3134/dataset/traffic.csv /user/hadoop/IST3134/mpresult
-hadoop jar lofanomaly.jar LOFAnomalyDetection /home/hadoop/IST3134/dataset/traffic.csv /home/hadoop/IST3134/mpresult2
+$ hadoop jar lofanomaly.jar LOFAnomalyDetection /home/hadoop/IST3134/dataset/traffic.csv /home/hadoop/IST3134/mpresults
 
 $ end_time=$(date +%s)
 $ execution_time=$((end_time - start_time))
