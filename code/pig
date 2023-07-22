@@ -2,20 +2,35 @@ $ start-all.sh
 $ cd IST3134
 $ pig -x local -d error
 
--- Load the traffic data from CSV file
-grunt> traffic = LOAD 'traffic.csv' USING PigStorage(',') AS (
+traffic = LOAD '/home/hadoop/IST3134/dataset/traffic.csv' USING PigStorage(',') AS (
     ID: int,
     SPEED: float,
     TRAVEL_TIME: int,
     STATUS: int,
     DATA_AS_OF: chararray,
     LINK_ID: chararray,
-    LINK_POINTS: chararray,
     OWNER: chararray,
     TRANSCOM_ID: int,
-    BOROUGH: chararray,
+    BOROUGH: chararray, 
     LINK_NAME: chararray
 );
+
+traffic_display = FOREACH traffic GENERATE CONCAT('ID: ', (chararray)ID), 
+                                        CONCAT('SPEED: ', (chararray)SPEED),
+                                        CONCAT('TRAVEL_TIME: ', (chararray)TRAVEL_TIME),
+                                        CONCAT('STATUS: ', (chararray)STATUS),
+                                        CONCAT('DATA_AS_OF: ', DATA_AS_OF),
+                                        CONCAT('LINK_ID: ', LINK_ID),
+                                        CONCAT('OWNER: ', OWNER),
+                                        CONCAT('TRANSCOM_ID: ', (chararray)TRANSCOM_ID),
+                                        CONCAT('BOROUGH: ', BOROUGH),
+                                        CONCAT('LINK_NAME: ', LINK_NAME);
+
+-- Limit the display to the first 10 rows
+limited_display = LIMIT traffic_display 5;
+
+-- Display the first 10 rows of the 'limited_display' relation
+DUMP limited_display;
 
 -- Filter and project the relevant columns for anomaly detection
 grunt> speed_travel_time = FOREACH traffic GENERATE SPEED, TRAVEL_TIME;
@@ -92,36 +107,7 @@ $ cat part-r-00001 | less
 -- Load the results from the output file containing filtered anomalies
 anomalies = LOAD '/home/hadoop/IST3134/outputpig.csv' USING PigStorage(',') AS (SPEED: float, TRAVEL_TIME: int, LOF_SCORE: double);
 
--- Load the original traffic data with borough information
-traffic = LOAD '/home/hadoop/IST3134/dataset/newtraffic.csv' USING PigStorage(',') AS (
-    ID: int,
-    SPEED: float,
-    TRAVEL_TIME: int,
-    STATUS: int,
-    DATA_AS_OF: chararray,
-    LINK_ID: chararray,
-    OWNER: chararray,
-    TRANSCOM_ID: int,
-    BOROUGH: chararray, 
-    LINK_NAME: chararray
-);
 
-traffic_display = FOREACH traffic GENERATE CONCAT('ID: ', (chararray)ID), 
-                                        CONCAT('SPEED: ', (chararray)SPEED),
-                                        CONCAT('TRAVEL_TIME: ', (chararray)TRAVEL_TIME),
-                                        CONCAT('STATUS: ', (chararray)STATUS),
-                                        CONCAT('DATA_AS_OF: ', DATA_AS_OF),
-                                        CONCAT('LINK_ID: ', LINK_ID),
-                                        CONCAT('OWNER: ', OWNER),
-                                        CONCAT('TRANSCOM_ID: ', (chararray)TRANSCOM_ID),
-                                        CONCAT('BOROUGH: ', BOROUGH),
-                                        CONCAT('LINK_NAME: ', LINK_NAME);
-
--- Limit the display to the first 10 rows
-limited_display = LIMIT traffic_display 10;
-
--- Display the first 10 rows of the 'limited_display' relation
-DUMP limited_display;
 
 -- Join the anomalies back with the original traffic data based on SPEED and TRAVEL_TIME columns
 anomalies_with_traffic = JOIN anomalies BY (SPEED, TRAVEL_TIME), traffic BY (SPEED, TRAVEL_TIME);
