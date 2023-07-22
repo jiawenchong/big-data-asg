@@ -51,6 +51,7 @@ grunt> speed_travel_time_std = FOREACH speed_travel_time GENERATE
     (SPEED - stats.avg_speed) / stats.std_speed AS SPEED_STD,
     (TRAVEL_TIME - stats.avg_travel_time) / stats.std_travel_time AS TRAVEL_TIME_STD;
 
+--store
 STORE speed_travel_time_std INTO '/home/hadoop/IST3134/preprocessed_data.csv' USING PigStorage(',');
 
 ----duplicate another new session
