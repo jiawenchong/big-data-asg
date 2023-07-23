@@ -2,7 +2,7 @@ $ start-all.sh
 $ cd IST3134
 $ pig -x local -d error
 
-traffic = LOAD '/home/hadoop/IST3134/dataset/traffic.csv' USING PigStorage(',') AS (
+traffic = LOAD '/home/hadoop/IST3134/traffic.csv' USING PigStorage(',') AS (
     ID: int,
     SPEED: float,
     TRAVEL_TIME: int,
@@ -14,6 +14,16 @@ traffic = LOAD '/home/hadoop/IST3134/dataset/traffic.csv' USING PigStorage(',') 
     BOROUGH: chararray, 
     LINK_NAME: chararray
 );
+
+
+-- Use STREAM to pass data from Pig to the Python script for input_data
+input_data = STREAM traffic THROUGH 'python3 process_data.py' AS (word: chararray, count: int);
+
+-- Use STREAM to pass data from Pig to the Python script for stream_data
+stream_data = STREAM traffic THROUGH 'python3 process_data.py' AS (word: chararray, count: int);
+
+-- Use STREAM to pass data from Pig to the Python script for output_data
+output_data = STREAM traffic THROUGH 'python3 process_data.py' AS (word: chararray, count: int);
 
 -- Filter and project the relevant columns for anomaly detection
 grunt> speed_travel_time = FOREACH traffic GENERATE SPEED, TRAVEL_TIME;
