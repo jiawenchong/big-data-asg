@@ -1,0 +1,24 @@
+// Mapper function pseudocode
+class OutlierDetectionMapper extends Mapper<LongWritable, Text, Text, Text> {
+    // Define the map function
+    public void map(LongWritable key, Text value, Context context) {
+        // Parse the CSV record
+        // Extract relevant columns ('SPEED', 'TRAVEL_TIME', 'BOROUGH')
+        // Convert data types and handle missing values
+
+        // Output intermediate key-value pairs
+        context.write(new Text("dummy_key"), new Text("SPEED,TRAVEL_TIME,BOROUGH"));
+    }
+}
+
+// Reducer function pseudocode
+class OutlierDetectionReducer extends Reducer<Text, Text, Text, Text> {
+    // Define the reduce function
+    public void reduce(Text key, Iterable<Text> values, Context context) {
+        // Collect and process the data from the Mapper
+        // Implement the Local Outlier Factor (LOF) algorithm
+
+        // Output the final results
+        context.write(new Text("SPEED,TRAVEL_TIME,BOROUGH,lof_score"), new Text("calculated_lof_score"));
+    }
+}
