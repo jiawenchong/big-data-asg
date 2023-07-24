@@ -1,31 +1,42 @@
-import csv
-from sklearn.neighbors import LocalOutlierFactor
+import pandas as pd
+import numpy as np
 
 # Specify the input file path
 input_file = '/home/hadoop/IST3134/preprocessed_data.csv/part-m-00000'
 
-# Specify the output file path
-output_file = '/home/hadoop/IST3134/outputpig.csv'
+# Load only the required columns for the LOF algorithm
+data_df = pd.read_csv(input_file, na_values=['', 'NA', 'NaN'], dtype={'SPEED': float, 'TRAVEL_TIME': float, 'BOROUGH': str})
 
-data = []
-
-with open(input_file, 'r') as csvfile:
-    reader = csv.reader(csvfile)
-    for record in reader:
-        speed = float(record[0].replace('(', '').replace(')', ''))
-        travel_time = float(record[1].replace('(', '').replace(')', ''))
-        data.append([speed, travel_time])
+# Drop rows with NA values in the 'SPEED', 'TRAVEL_TIME', or 'BOROUGH' columns
+data_df.dropna(subset=['SPEED', 'TRAVEL_TIME'], inplace=True)
 
 # Run the LOF algorithm on the data
-lof = LocalOutlierFactor(n_neighbors=5)
-lof_scores = lof.fit_predict(data)
+data = data_df[['SPEED', 'TRAVEL_TIME']].values
+lof_scores = LocalOutlierFactor(n_neighbors=5).fit_predict(data)
 
-# Generate the LOF scores
-results = []
-for i, score in enumerate(lof_scores):
-    results.append([data[i][0], data[i][1], score])
+# Add the LOF scores to the DataFrame
+data_df['lof_score'] = lof_scores
+
+# Specify the output file path
+output_file = '/home/hadoop/IST3134/outputpig1.csv'
 
 # Write results to CSV file
-with open(output_file, 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerows(results)
+data_df.to_csv(output_file, index=False)
+
+# Read the output CSV file into a new DataFrame
+output_df = pd.read_csv(output_file)
+
+# Perform data manipulations and save the final result to CSV file
+output_df['BOROUGH'] = output_df['BOROUGH'].str.upper()
+output_df['has_na'] = np.where(output_df['lof_score'].isna(), 1, 0)
+
+result = output_df.groupby('BOROUGH').agg(
+    count_leq1=('lof_score', lambda x: np.sum(x <= 1)),
+    count_gt1=('lof_score', lambda x: np.sum(x > 1)),
+    count_na=('has_na', 'sum')
+).reset_index()
+
+output_file2 = '/home/hadoop/IST3134/pigresults.csv'
+
+# Write the final result to CSV file
+result.to_csv(output_file2, index=False)
