@@ -11,6 +11,15 @@ $ cd ~/workspace/lof/src
 $ ls
 $ hadoop classpath
 $ nano LOFAnomalyDetection.java
+mkdir lib
+cd lib
+wget https://archive.apache.org/dist/commons/csv/binaries/commons-csv-1.8-bin.zip
+wget https://archive.apache.org/dist/commons/math/binaries/commons-math3-3.6.1-bin.zip
+unzip commons-csv-1.8-bin.zip
+unzip commons-math3-3.6.1-bin.zip
+javac -cp "lib/*:$(hadoop classpath)" LOFJavaExample.java
+java -cp "lib/*:$(hadoop classpath)" LOFJavaExample
+
 $ javac -classpath $(hadoop classpath) LOFAnomalyDetection.java
 $ jar cf lofanomaly.jar LOFAnomalyDetection*.class
 
