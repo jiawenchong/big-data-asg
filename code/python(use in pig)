@@ -1,42 +1,68 @@
 import pandas as pd
 import numpy as np
+from pyod.models.lof import LOF
+from sklearn.utils import shuffle
 
 # Specify the input file path
 input_file = '/home/hadoop/IST3134/preprocessed_data.csv/part-m-00000'
 
-# Load only the required columns for the LOF algorithm
-data_df = pd.read_csv(input_file, na_values=['', 'NA', 'NaN'], dtype={'SPEED': float, 'TRAVEL_TIME': float, 'BOROUGH': str})
+# Load the data and filter out rows with NA values in 'SPEED', 'TRAVEL_TIME', or 'BOROUGH' columns
+data_df = pd.read_csv(input_file, na_values=["", "NA", "NaN"])
+data_df = data_df.dropna(subset=["SPEED", "TRAVEL_TIME"])
 
-# Drop rows with NA values in the 'SPEED', 'TRAVEL_TIME', or 'BOROUGH' columns
-data_df.dropna(subset=['SPEED', 'TRAVEL_TIME'], inplace=True)
+# Take a random sample
+sample_size = 150000
+data_sample = shuffle(data_df, random_state=123)[:sample_size]
 
-# Run the LOF algorithm on the data
-data = data_df[['SPEED', 'TRAVEL_TIME']].values
-lof_scores = LocalOutlierFactor(n_neighbors=5).fit_predict(data)
+# Run the LOF algorithm on the data sample
+data_for_lof = data_sample[["SPEED", "TRAVEL_TIME"]]
+lof_model = LOF(n_neighbors=5)
+lof_model.fit(data_for_lof)
+lof_scores = lof_model.decision_scores_
 
 # Add the LOF scores to the DataFrame
-data_df['lof_score'] = lof_scores
+data_sample["lof_score"] = lof_scores
 
 # Specify the output file path
-output_file = '/home/hadoop/IST3134/outputpig1.csv'
+output_file = '/home/hadoop/IST3134/loflof'
 
 # Write results to CSV file
-data_df.to_csv(output_file, index=False)
+data_sample.to_csv(output_file, index=False)
+
+# Perform data manipulations and save the final result to CSV file
+data_sample["BOROUGH"] = data_sample["BOROUGH"].str.upper()
+data_sample["has_na"] = np.where(data_sample["lof_score"].isnull(), 1, 0)
+
+result = data_sample.groupby("BOROUGH").agg(
+    count_leq1=pd.NamedAgg(column="lof_score", aggfunc=lambda x: sum(x <= 1)),
+    count_gt1=pd.NamedAgg(column="lof_score", aggfunc=lambda x: sum(x > 1)),
+    count_na=pd.NamedAgg(column="has_na", aggfunc="sum")
+).reset_index()
+
+# Print the result
+print(result)
+
+# Write the final result to CSV file
+result.to_csv('home/hadoop/IST3134/output, index=False)
 
 # Read the output CSV file into a new DataFrame
+output_file = "/home/hadoop/IST3134/outputpig.csv"
 output_df = pd.read_csv(output_file)
 
 # Perform data manipulations and save the final result to CSV file
-output_df['BOROUGH'] = output_df['BOROUGH'].str.upper()
-output_df['has_na'] = np.where(output_df['lof_score'].isna(), 1, 0)
+output_df["BOROUGH"] = output_df["BOROUGH"].str.upper()
 
-result = output_df.groupby('BOROUGH').agg(
-    count_leq1=('lof_score', lambda x: np.sum(x <= 1)),
-    count_gt1=('lof_score', lambda x: np.sum(x > 1)),
-    count_na=('has_na', 'sum')
-).reset_index()
+# Group by "BOROUGH" and aggregate the counts
+result = output_df.groupby("BOROUGH").agg({
+    "count_leq1": "sum",
+    "count_gt1": "sum",
+    "count_na": "sum"
+}).reset_index()
 
-output_file2 = '/home/hadoop/IST3134/pigresults.csv'
+# Specify the final output result file path
+output_result_file = "/home/hadoop/IST3134/output_summary.csv"
 
 # Write the final result to CSV file
-result.to_csv(output_file2, index=False)
+result.to_csv(output_result_file, index=False)
+
+print("Result saved to:", output_result_file)
