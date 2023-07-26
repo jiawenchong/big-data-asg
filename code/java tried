@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class LOFJavaExample {
     public static void main(String[] args) {
         // Specify the input file path
-        String inputFilePath = "/home/hadoop/IST3134/predata2/half1";
+        String inputFilePath = "/home/hadoop/IST3134/dataset/half1";
         // Specify the output file path
         String outputFilePath = "/home/hadoop/IST3134/maplof.csv";
         String outputResultFilePath = "/home/hadoop/IST3134/mapresult.csv";
