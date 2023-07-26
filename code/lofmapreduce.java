@@ -1,4 +1,3 @@
-
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -19,6 +18,7 @@ public class LOFMapReduce {
     private static final Text LOF_SCORE_TAG = new Text("LOF_SCORE");
 
     // Mapper class
+// Mapper class
 public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -42,6 +42,7 @@ public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
         context.write(DATA_RECORD_TAG, new Text(dataRecord.toString()));
     }
 }
+
 
 
   // Reducer class
