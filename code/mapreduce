@@ -2,10 +2,10 @@ $ start-all.sh
 $ cd IST3134/
 $ ls
 $ mkdir ~/workspace
-$ cp traffic.csv ~/workspace/
+$ cp preprocessed_data.csv ~/workspace/
 $ cd ~/workspace
 $ hadoop fs -mkdir -p /home/hadoop/IST3134/dataset
-$ hadoop fs -put traffic.csv /home/hadoop/IST3134/dataset
+$ hadoop fs -put preprocessed_data.csv /home/hadoop/IST3134/dataset
 $ hadoop fs -mkdir /home/hadoop/IST3134/mpoutput
 $ cd ~/workspace/lof/src
 $ ls
