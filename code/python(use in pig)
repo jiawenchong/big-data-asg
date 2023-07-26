@@ -24,7 +24,7 @@ lof_scores = lof_model.decision_scores_
 data_sample["lof_score"] = lof_scores
 
 # Specify the output file path
-output_file = '/home/hadoop/IST3134/loflof'
+output_file = '/home/hadoop/IST3134/loflof.csv'
 
 # Write results to CSV file
 data_sample.to_csv(output_file, index=False)
@@ -39,30 +39,11 @@ result = data_sample.groupby("BOROUGH").agg(
     count_na=pd.NamedAgg(column="has_na", aggfunc="sum")
 ).reset_index()
 
-# Print the result
+# Print the result (optional)
 print(result)
 
 # Write the final result to CSV file
-result.to_csv('home/hadoop/IST3134/output, index=False)
-
-# Read the output CSV file into a new DataFrame
-output_file = "/home/hadoop/IST3134/outputpig.csv"
-output_df = pd.read_csv(output_file)
-
-# Perform data manipulations and save the final result to CSV file
-output_df["BOROUGH"] = output_df["BOROUGH"].str.upper()
-
-# Group by "BOROUGH" and aggregate the counts
-result = output_df.groupby("BOROUGH").agg({
-    "count_leq1": "sum",
-    "count_gt1": "sum",
-    "count_na": "sum"
-}).reset_index()
-
-# Specify the final output result file path
 output_result_file = "/home/hadoop/IST3134/output_summary.csv"
-
-# Write the final result to CSV file
 result.to_csv(output_result_file, index=False)
 
 print("Result saved to:", output_result_file)
