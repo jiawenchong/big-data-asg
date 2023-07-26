@@ -15,18 +15,8 @@ traffic = LOAD '/home/hadoop/IST3134/traffic.csv' USING PigStorage(',') AS (
     LINK_NAME: chararray
 );
 
-
--- Use STREAM to pass data from Pig to the Python script for input_data
-input_data = STREAM traffic THROUGH 'python3 process_data.py' AS (word: chararray, count: int);
-
--- Use STREAM to pass data from Pig to the Python script for stream_data
-stream_data = STREAM traffic THROUGH 'python3 process_data.py' AS (word: chararray, count: int);
-
--- Use STREAM to pass data from Pig to the Python script for output_data
-output_data = STREAM traffic THROUGH 'python3 process_data.py' AS (word: chararray, count: int);
-
 -- Filter and project the relevant columns for anomaly detection
-grunt> speed_travel_time = FOREACH traffic GENERATE SPEED, TRAVEL_TIME;
+grunt> speed_travel_time = FOREACH traffic GENERATE SPEED, TRAVEL_TIME, BOROUGH;
 
 -- Calculate mean for SPEED
 grunt> speed_mean = FOREACH (GROUP speed_travel_time ALL) GENERATE AVG(speed_travel_time.SPEED) AS avg_speed;
@@ -57,15 +47,16 @@ grunt> stats = FOREACH stats_cross GENERATE
     travel_time_std::std_travel_time AS std_travel_time;
 
 -- Standardize the data (subtract mean and divide by standard deviation)
-grunt> speed_travel_time_std = FOREACH speed_travel_time GENERATE
+speed_travel_time_std = FOREACH speed_travel_time GENERATE
     (SPEED - stats.avg_speed) / stats.std_speed AS SPEED_STD,
-    (TRAVEL_TIME - stats.avg_travel_time) / stats.std_travel_time AS TRAVEL_TIME_STD;
+    (TRAVEL_TIME - stats.avg_travel_time) / stats.std_travel_time AS TRAVEL_TIME_STD,
+    BOROUGH;
 
---store
+-- Store the standardized data with borough information
 STORE speed_travel_time_std INTO '/home/hadoop/IST3134/preprocessed_data.csv' USING PigStorage(',');
 
 ----duplicate another new session
-----run the Python code in the Hadoop cluster
+----run the Python code in the terminal
 $ pip install scikit-learn
 $ nano lof.py
 $ start_time=$(date +%s)
@@ -82,38 +73,14 @@ $ cat part-m-00001 | less
 -- Load the results from the output file
 anomalies = LOAD '/home/hadoop/IST3134/outputpig.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
 
--- Join the anomalies back with the original traffic data
-anomalies_with_traffic = JOIN anomalies BY (SPEED, TRAVEL_TIME), traffic BY (SPEED, TRAVEL_TIME);
+-- Display the anomalies
+DUMP anomalies;
 
 -- Store the anomalies in a separate file
-STORE anomalies_with_traffic INTO 'anomalies1.csv' USING PigStorage(',');
-
--- Display the anomalies
-DUMP anomalies_with_traffic;
+STORE anomalies INTO 'anomalies1.csv' USING PigStorage(',');
 
 -back to the terminal
 $ cd IST3134/anomalies1.csv
 $ cat part-r-00000 | less
 $ cat part-r-00001 | less
 
------
--- Load the results from the output file containing filtered anomalies
-anomalies = LOAD '/home/hadoop/IST3134/outputpig.csv' USING PigStorage(',') AS (SPEED: float, TRAVEL_TIME: int, LOF_SCORE: double);
-
-
-
--- Join the anomalies back with the original traffic data based on SPEED and TRAVEL_TIME columns
-anomalies_with_traffic = JOIN anomalies BY (SPEED, TRAVEL_TIME), traffic BY (SPEED, TRAVEL_TIME);
-
--- Project the desired columns in the output relation (including the BOROUGH column)
-anomalies_with_borough = FOREACH anomalies_with_traffic GENERATE anomalies::SPEED AS SPEED,
-                                                           anomalies::TRAVEL_TIME AS TRAVEL_TIME,
-                                                           anomalies::LOF_SCORE AS LOF_SCORE,
-                                                           traffic::BOROUGH AS BOROUGH;
-
--- Store the anomalies with borough information in a separate file
-STORE anomalies_with_borough INTO 'anomalies_with_borough.csv' USING PigStorage(',');
-
--- Display the limited anomalies with borough information (only 50 rows)
-limited_anomalies = LIMIT anomalies_with_borough 50;
-DUMP limited_anomalies;
