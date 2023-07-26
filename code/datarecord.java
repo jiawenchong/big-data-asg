@@ -13,8 +13,8 @@ public class DataRecord {
     }
 
     // Additional methods to convert to/from string representation (if required)
-    public static DataRecord fromString(String dataString) {
-        String[] fields = dataString.split(",");
+    public static DataRecord fromString(String str) {
+        String[] fields = str.split(",");
         double speed = Double.parseDouble(fields[0]);
         double travelTime = Double.parseDouble(fields[1]);
         String borough = fields[2];
