@@ -56,7 +56,7 @@ public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
             }
 
             // Take a random sample from dataRecords
-            int sampleSize = 300000;
+            int sampleSize = 400000;
             List<DataRecord> dataSample = takeRandomSample(dataRecords, sampleSize);
 
             // Calculate LOF scores for the data sample
