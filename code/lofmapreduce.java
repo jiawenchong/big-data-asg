@@ -44,8 +44,7 @@ public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
 }
 
 
-
-  // Reducer class
+// Reducer class
 public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
     // Reducer implementation
     @Override
@@ -65,9 +64,11 @@ public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
             double[] lofScores = calculateLOFScores(dataSample);
 
             // Emit LOF scores for the data sample
-            for (int i = 0; i < dataSample.size(); i++) {
-                DataRecord dataRecord = dataSample.get(i);
-                context.write(new Text(dataRecord.toString()), new Text(String.valueOf(lofScores[i])));
+            int i = 0;
+            for (DataRecord dataRecord : dataSample) {
+                // Use the line number as the identifier for each data point
+                context.write(new Text("DATA_" + i), new Text(dataRecord.toString() + "," + lofScores[i]));
+                i++;
             }
         }
     }
