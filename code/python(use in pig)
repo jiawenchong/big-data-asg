@@ -24,7 +24,7 @@ lof_scores = lof_model.decision_scores_
 data_sample["lof_score"] = lof_scores
 
 # Specify the output file path
-output_file = '/home/hadoop/IST3134/loflof.csv'
+output_file = '/home/hadoop/IST3134/anomalies1.csv'
 
 # Write results to CSV file
 data_sample.to_csv(output_file, index=False)
@@ -43,7 +43,7 @@ result = data_sample.groupby("BOROUGH").agg(
 print(result)
 
 # Write the final result to CSV file
-output_result_file = "/home/hadoop/IST3134/output.csv"
+output_result_file = "/home/hadoop/IST3134/outpig.csv"
 result.to_csv(output_result_file, index=False)
 
 print("Result saved to:", output_result_file)
