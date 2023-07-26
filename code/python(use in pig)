@@ -11,7 +11,7 @@ data_df = pd.read_csv(input_file, na_values=["", "NA", "NaN"])
 data_df = data_df.dropna(subset=["SPEED", "TRAVEL_TIME"])
 
 # Take a random sample
-sample_size = 150000
+sample_size = 200000
 data_sample = shuffle(data_df, random_state=123)[:sample_size]
 
 # Run the LOF algorithm on the data sample
