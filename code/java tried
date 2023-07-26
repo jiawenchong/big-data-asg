@@ -1,0 +1,96 @@
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.math3.ml.distance.EuclideanDistance;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+public class LOFJavaExample {
+    public static void main(String[] args) {
+        // Specify the input file path
+        String inputFilePath = "/home/hadoop/IST3134/predata2/half1";
+        // Specify the output file path
+        String outputFilePath = "/home/hadoop/IST3134/maplof.csv";
+        String outputResultFilePath = "/home/hadoop/IST3134/mapresult.csv";
+
+        long startTime = System.nanoTime();
+
+        try {
+            // Load the data and filter out rows with NA values in 'SPEED', 'TRAVEL_TIME', or 'BOROUGH' columns
+            List<DataRecord> dataRecords = loadData(inputFilePath);
+
+            // Take a random sample
+            int sampleSize = 150000;
+            List<DataRecord> dataSample = takeRandomSample(dataRecords, sampleSize);
+
+            // Run the LOF algorithm on the data sample
+            double[] lofScores = calculateLOFScores(dataSample);
+
+            // Add the LOF scores to the data sample
+            addLOFScores(dataSample, lofScores);
+
+            // Write results to CSV file
+            writeDataToCSV(dataSample, outputFilePath);
+
+            // Perform data manipulations and save the final result to CSV file
+            manipulateAndSaveResult(dataSample, outputResultFilePath);
+
+            System.out.println("Result saved to: " + outputResultFilePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        long endTime = System.nanoTime();
+        long executionTime = endTime - startTime;
+        long executionTimeInSeconds = executionTime / 1_000_000_000; // Convert nanoseconds to seconds
+
+        System.out.println("Execution Time: " + executionTimeInSeconds + " seconds");
+    }
+
+    private static List<DataRecord> loadData(String filePath) throws IOException {
+        // ... (load data from CSV and return a list of DataRecord objects)
+    }
+
+    private static List<DataRecord> takeRandomSample(List<DataRecord> dataRecords, int sampleSize) {
+        // ... (take a random sample of the specified size and return it)
+    }
+
+    private static double[] calculateLOFScores(List<DataRecord> dataSample) {
+        // ... (calculate LOF scores and return an array of scores)
+    }
+
+    private static void addLOFScores(List<DataRecord> dataSample, double[] lofScores) {
+        // ... (add the LOF scores to the data sample)
+    }
+
+    private static void writeDataToCSV(List<DataRecord> dataSample, String outputFilePath) throws IOException {
+        // ... (write the data sample to CSV file)
+    }
+
+    private static void manipulateAndSaveResult(List<DataRecord> dataSample, String outputResultFilePath) throws IOException {
+        // ... (perform data manipulations, save the final result to CSV file)
+    }
+
+    private static class DataRecord {
+        double speed;
+        double travelTime;
+        String borough;
+        double lofScore;
+        int hasNA;
+
+        public DataRecord(double speed, double travelTime, String borough) {
+            this.speed = speed;
+            this.travelTime = travelTime;
+            this.borough = borough;
+        }
+    }
+}
