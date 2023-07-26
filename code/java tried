@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -56,17 +57,65 @@ public class LOFJavaExample {
         System.out.println("Execution Time: " + executionTimeInSeconds + " seconds");
     }
 
-    private static List<DataRecord> loadData(String filePath) throws IOException {
-        // ... (load data from CSV and return a list of DataRecord objects)
+private static List<DataRecord> loadData(String filePath) throws IOException {
+    // ... (load data from CSV and return a list of DataRecord objects)
+    // Example:
+    List<DataRecord> dataRecords = new ArrayList<>();
+    // ... (load data and add it to dataRecords)
+    return dataRecords;
+}
+
+private static List<DataRecord> takeRandomSample(List<DataRecord> dataRecords, int sampleSize) {
+    // ... (take a random sample of the specified size and return it)
+    // Example:
+    List<DataRecord> dataSample = new ArrayList<>();
+    // ... (take the random sample from dataRecords and add it to dataSample)
+    return dataSample;
+}
+    private static double sumOfKNearestDistances(double[] distances, int k) {
+        Arrays.sort(distances);
+        double sum = 0;
+        for (int i = 0; i < k; i++) {
+            sum += distances[i];
+        }
+        return sum;
     }
 
-    private static List<DataRecord> takeRandomSample(List<DataRecord> dataRecords, int sampleSize) {
-        // ... (take a random sample of the specified size and return it)
+    private static double sumOfKLocalReachabilityDensity(double[] distances, int k, double lrd) {
+        Arrays.sort(distances);
+        double sum = 0;
+        for (int i = 0; i < k; i++) {
+            sum += Math.max(lrd, distances[i]);
+        }
+        return sum;
+    }
+private static double[] calculateLOFScores(List<DataRecord> dataSample) {
+    int k = 5; // number of neighbors for LOF
+    double[] lofScores = new double[dataSample.size()];
+    EuclideanDistance euclideanDistance = new EuclideanDistance();
+
+    for (int i = 0; i < dataSample.size(); i++) {
+        DataRecord currentRecord = dataSample.get(i);
+        double[] distances = new double[dataSample.size()];
+
+        for (int j = 0; j < dataSample.size(); j++) {
+            DataRecord otherRecord = dataSample.get(j);
+            distances[j] = euclideanDistance.compute(
+                    new double[]{currentRecord.speed, currentRecord.travelTime},
+                    new double[]{otherRecord.speed, otherRecord.travelTime}
+            );
+        }
+
+        Arrays.sort(distances);
+        double kthDistance = distances[k];
+        double lrd = k / (sumOfKNearestDistances(distances, k) * Math.PI * kthDistance * kthDistance);
+        double lof = sumOfKLocalReachabilityDensity(distances, k, lrd) / (lrd * k);
+        lofScores[i] = lof;
     }
 
-    private static double[] calculateLOFScores(List<DataRecord> dataSample) {
-        // ... (calculate LOF scores and return an array of scores)
-    }
+    return lofScores; 
+}
+
 
     private static void addLOFScores(List<DataRecord> dataSample, double[] lofScores) {
         // ... (add the LOF scores to the data sample)
