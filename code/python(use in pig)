@@ -43,7 +43,7 @@ result = data_sample.groupby("BOROUGH").agg(
 print(result)
 
 # Write the final result to CSV file
-output_result_file = "/home/hadoop/IST3134/output_summary.csv"
+output_result_file = "/home/hadoop/IST3134/output.csv"
 result.to_csv(output_result_file, index=False)
 
 print("Result saved to:", output_result_file)
