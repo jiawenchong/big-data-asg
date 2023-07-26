@@ -55,8 +55,10 @@ speed_travel_time_std = FOREACH speed_travel_time GENERATE
 -- Store the standardized data with borough information
 STORE speed_travel_time_std INTO '/home/hadoop/IST3134/preprocessed_data.csv' USING PigStorage(',');
 
-----duplicate another new session
-----run the Python code in the terminal
+$ cd IST3134/preprocessed_data.csv
+$ cat part-m-00000 | less
+$ cat part-m-00001 | less
+
 $ pip install scikit-learn
 $ nano lof.py
 $ start_time=$(date +%s)
@@ -65,22 +67,14 @@ $ end_time=$(date +%s)
 $ execution_time=$((end_time - start_time))
 $ echo "Execution time: ${execution_time} seconds"
 
-$ cd IST3134/preprocessed_data.csv
-$ cat part-m-00000 | less
-$ cat part-m-00001 | less
-
------in pig
--- Load the results from the output file
-anomalies = LOAD '/home/hadoop/IST3134/outputpig.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
-
--- Display the anomalies
-DUMP anomalies;
-
--- Store the anomalies in a separate file
-STORE anomalies INTO 'anomalies1.csv' USING PigStorage(',');
-
--back to the terminal
 $ cd IST3134/anomalies1.csv
 $ cat part-r-00000 | less
 $ cat part-r-00001 | less
+
+-- Load the results from the output file
+grunt> anomalies = LOAD '/home/hadoop/IST3134/outpig.csv' USING PigStorage(',') AS (data:tuple, lof_score:double);
+
+-- Display the anomalies
+grunt> DUMP anomalies;
+
 
