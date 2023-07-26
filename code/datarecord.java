@@ -10,13 +10,14 @@ public class DataRecord {
         this.speed = speed;
         this.travelTime = travelTime;
         this.borough = borough;
-   public String toString() {
-        return speed + "," + travelTime + "," + borough;
     }
+
+    public String toString() {
+        return speed + "," + travelTime + "," + borough;
     }
 
     // Additional methods to convert to/from string representation (if required)
-   public static DataRecord fromString(String str) {
+    public static DataRecord fromString(String str) {
         String[] fields = str.split(",");
         double speed = Double.parseDouble(fields[0]);
         double travelTime = Double.parseDouble(fields[1]);
@@ -29,4 +30,4 @@ public class DataRecord {
         // Your implementation here
         return new ArrayList<>();
     }
-} 
+}
