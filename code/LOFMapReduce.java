@@ -17,7 +17,6 @@ public class LOFMapReduce {
     private static final Text DATA_RECORD_TAG = new Text("DATA_RECORD");
     private static final Text LOF_SCORE_TAG = new Text("LOF_SCORE");
 
-    // Mapper class
 // Mapper class
 public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
     @Override
@@ -57,7 +56,7 @@ public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
             }
 
             // Take a random sample from dataRecords
-            int sampleSize = 50000;
+            int sampleSize = 300000;
             List<DataRecord> dataSample = takeRandomSample(dataRecords, sampleSize);
 
             // Calculate LOF scores for the data sample
