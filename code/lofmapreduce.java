@@ -19,25 +19,30 @@ public class LOFMapReduce {
     private static final Text LOF_SCORE_TAG = new Text("LOF_SCORE");
 
     // Mapper class
-    public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
-        // Mapper implementation
-        @Override
-        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            // Split the input value (CSV line) into its fields
-            String[] fields = value.toString().split(",");
-
-            // Assuming the CSV format is "speed,travelTime,borough"
-            double speed = Double.parseDouble(fields[0]);
-            double travelTime = Double.parseDouble(fields[1]);
-            String borough = fields[2];
-
-            // Create a DataRecord instance for the current data point
-            DataRecord dataRecord = new DataRecord(speed, travelTime, borough);
-
-            // Emit the data record to the reducer
-            context.write(DATA_RECORD_TAG, new Text(dataRecord.toString()));
+public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        // Skip the header line
+        if (key.get() == 0) {
+            return;
         }
+
+        // Split the input value (CSV line) into its fields
+        String[] fields = value.toString().split(",");
+
+        // Assuming the CSV format is "speed,travelTime,borough"
+        double speed = Double.parseDouble(fields[0]);
+        double travelTime = Double.parseDouble(fields[1]);
+        String borough = fields[2];
+
+        // Create a DataRecord instance for the current data point
+        DataRecord dataRecord = new DataRecord(speed, travelTime, borough);
+
+        // Emit the data record to the reducer
+        context.write(DATA_RECORD_TAG, new Text(dataRecord.toString()));
     }
+}
+
 
   // Reducer class
 public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
