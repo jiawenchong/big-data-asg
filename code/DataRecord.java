@@ -16,7 +16,6 @@ public class DataRecord {
         return speed + "," + travelTime + "," + borough;
     }
 
-    // Additional methods to convert to/from string representation (if required)
     public static DataRecord fromString(String str) {
         String[] fields = str.split(",");
         double speed = Double.parseDouble(fields[0]);
@@ -25,9 +24,7 @@ public class DataRecord {
         return new DataRecord(speed, travelTime, borough);
     }
 
-    // Implement this method based on your requirements or use any random sampling method
     public static List<DataRecord> takeRandomSample(List<DataRecord> dataRecords, int sampleSize) {
-        // Your implementation here
         return new ArrayList<>();
     }
 }
