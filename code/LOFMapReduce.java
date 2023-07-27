@@ -17,74 +17,63 @@ public class LOFMapReduce {
     private static final Text DATA_RECORD_TAG = new Text("DATA_RECORD");
     private static final Text LOF_SCORE_TAG = new Text("LOF_SCORE");
 
-// Mapper class
-public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
-    @Override
-    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        // Skip the header line
-        if (key.get() == 0) {
-            return;
-        }
-
-        // Split the input value (CSV line) into its fields
-        String[] fields = value.toString().split(",");
-
-        // Assuming the CSV format is "speed,travelTime,borough"
-        double speed = Double.parseDouble(fields[0]);
-        double travelTime = Double.parseDouble(fields[1]);
-        String borough = fields[2];
-
-        // Create a DataRecord instance for the current data point
-        DataRecord dataRecord = new DataRecord(speed, travelTime, borough);
-
-        // Emit the data record to the reducer
-        context.write(DATA_RECORD_TAG, new Text(dataRecord.toString()));
-    }
-}
-
-
-// Reducer class
-public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
-    // Reducer implementation
-    @Override
-    protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-        if (key.equals(DATA_RECORD_TAG)) {
-            // Process DataRecord instances
-            List<DataRecord> dataRecords = new ArrayList<>();
-            for (Text value : values) {
-                dataRecords.add(DataRecord.fromString(value.toString()));
+    // Mapper 
+    public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
+        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            // Skip the header line
+            if (key.get() == 0) {
+                return;
             }
 
-            // Take a random sample from dataRecords
-            int sampleSize = 400000;
-            List<DataRecord> dataSample = takeRandomSample(dataRecords, sampleSize);
+            // Split the input value (CSV line) into its fields
+            String[] fields = value.toString().split(",");
 
-            // Calculate LOF scores for the data sample
-            double[] lofScores = calculateLOFScores(dataSample);
+            // Assuming the CSV format is "speed,travelTime,borough"
+            double speed = Double.parseDouble(fields[0]);
+            double travelTime = Double.parseDouble(fields[1]);
+            String borough = fields[2];
 
-            // Emit LOF scores for the data sample
-            int i = 0;
-            for (DataRecord dataRecord : dataSample) {
-                // Use the line number as the identifier for each data point
-                context.write(new Text("DATA_" + i), new Text(dataRecord.toString() + "," + lofScores[i]));
-                i++;
-            }
+            // Create a DataRecord instance for the current data point
+            DataRecord dataRecord = new DataRecord(speed, travelTime, borough);
+
+            // Emit the data record to the reducer
+            context.write(DATA_RECORD_TAG, new Text(dataRecord.toString()));
         }
     }
 
-    // Implement this method based on your requirements or use any random sampling method
-    private List<DataRecord> takeRandomSample(List<DataRecord> dataRecords, int sampleSize) {
-        // Your implementation here
-        return new ArrayList<>();
-    }
+    // Reducer
+    public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
+        protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            if (key.equals(DATA_RECORD_TAG)) {
+                // Process DataRecord instances
+                List<DataRecord> dataRecords = new ArrayList<>();
+                List<Double> lofScores = new ArrayList<>();
+                List<String> boroughs = new ArrayList<>();
 
-    // Implement this method based on your requirements or LOF algorithm
-    private double[] calculateLOFScores(List<DataRecord> dataSample) {
-        // Your implementation here
-        return new double[dataSample.size()];
-    }
-}
+                for (Text value : values) {
+                    DataRecord dataRecord = DataRecord.fromString(value.toString());
+                    dataRecords.add(dataRecord);
 
+                    // Assume LOF scores and boroughs are printed by the Python script
+                    String[] parts = value.toString().split(",");
+                    double lofScore = Double.parseDouble(parts[3]);
+                    String borough = parts[4];
+
+                    lofScores.add(lofScore);
+                    boroughs.add(borough);
+                }
+
+                // Perform the final aggregation
+                for (int i = 0; i < dataRecords.size(); i++) {
+                    String borough = boroughs.get(i);
+                    double lofScore = lofScores.get(i);
+
+                    // Emit the data record along with its borough and LOF score
+                    context.write(new Text(borough), new Text(dataRecords.get(i).toString() + "," + lofScore));
+                }
+            }
+        }
+    }
 
     // Main method to set up and run the MapReduce job
     public static void main(String[] args) throws Exception {
