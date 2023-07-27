@@ -11,14 +11,18 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class LOFMapReduce {
     // Define constants to identify the output value types
     private static final Text DATA_RECORD_TAG = new Text("DATA_RECORD");
     private static final Text LOF_SCORE_TAG = new Text("LOF_SCORE");
 
-    // Mapper 
+    // Mapper
     public static class LOFMapper extends Mapper<LongWritable, Text, Text, Text> {
+        private static final int SAMPLE_SIZE = 400000;
+        private List<Text> sampledData = new ArrayList<>();
+
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             // Skip the header line
             if (key.get() == 0) {
@@ -28,18 +32,128 @@ public class LOFMapReduce {
             // Split the input value (CSV line) into its fields
             String[] fields = value.toString().split(",");
 
-            // Assuming the CSV format is "speed,travelTime,borough"
+            // Assuming the CSV format is "speed, travelTime, borough"
             double speed = Double.parseDouble(fields[0]);
             double travelTime = Double.parseDouble(fields[1]);
             String borough = fields[2];
 
-            // Create a DataRecord instance for the current data point
-            DataRecord dataRecord = new DataRecord(speed, travelTime, borough);
+            // Emit the data record with the borough as key and the values as text
+            context.write(new Text(borough), value);
 
-            // Emit the data record to the reducer
-            context.write(DATA_RECORD_TAG, new Text(dataRecord.toString()));
+            // Add the data record to the sampled data list
+            sampledData.add(value);
         }
+
+        // take a random sample from the data records
+        private List<Text> takeRandomSample() {
+            if (sampledData.size() <= SAMPLE_SIZE) {
+                return sampledData;
+            }
+
+            List<Text> sampledDataList = new ArrayList<>();
+            Random random = new Random();
+
+            for (int i = 0; i < SAMPLE_SIZE; i++) {
+                int index = random.nextInt(sampledData.size());
+                sampledDataList.add(sampledData.get(index));
+                sampledData.remove(index);
+            }
+
+            return sampledDataList;
+        }
+
+        protected void cleanup(Context context) throws IOException, InterruptedException {
+            // Take a random sample from the data records
+            List<Text> dataSample = takeRandomSample();
+
+            // Calculate LOF scores for the data sample
+            double[] lofScores = calculateLOFScores(dataSample);
+
+            // Emit LOF scores for the data sample
+            int i = 0;
+            for (Text dataRecord : dataSample) {
+                // Use the line number as the identifier for each data point
+                context.write(new Text("DATA_" + i), new Text(dataRecord.toString() + "," + lofScores[i]));
+                i++;
+            }
+        }
+
+        // LOF algorithm
+       private double[] calculateLOFScores(List<Text> dataSample) {
+    int k = 5; // The number of neighbors to consider in LOF calculation
+    double[] lofScores = new double[dataSample.size()];
+
+    // Convert data records to points with speed and travelTime attributes
+    List<Point> points = new ArrayList<>();
+    for (Text dataRecord : dataSample) {
+        String[] fields = dataRecord.toString().split(",");
+        double speed = Double.parseDouble(fields[0]);
+        double travelTime = Double.parseDouble(fields[1]);
+        Point point = new Point(speed, travelTime);
+        points.add(point);
     }
+
+    // Calculate LOF scores for each point
+    for (int i = 0; i < points.size(); i++) {
+        Point point = points.get(i);
+        List<Double> distances = new ArrayList<>();
+
+        // Calculate distances from the point to all other points
+        for (int j = 0; j < points.size(); j++) {
+            if (i != j) {
+                Point otherPoint = points.get(j);
+                double distance = calculateDistance(point, otherPoint);
+                distances.add(distance);
+            }
+        }
+
+        // Find k-nearest neighbors
+        Collections.sort(distances);
+        double kDistance = distances.get(k - 1);
+
+        // Calculate reachability distances
+        List<Double> reachabilityDistances = new ArrayList<>();
+        for (double distance : distances) {
+            double reachabilityDistance = Math.max(distance, kDistance);
+            reachabilityDistances.add(reachabilityDistance);
+        }
+
+        // Calculate Local Reachability Density (LRD)
+        double lrd = 0.0;
+        for (double reachabilityDistance : reachabilityDistances) {
+            lrd += reachabilityDistance;
+        }
+        lrd = k / lrd;
+
+        // Calculate LOF score
+        double lof = 0.0;
+        for (double reachabilityDistance : reachabilityDistances) {
+            int index = distances.indexOf(reachabilityDistance);
+            lof += lrd / reachabilityDistances.get(index);
+        }
+        lof = lof / k;
+        lofScores[i] = lof;
+    }
+
+    return lofScores;
+}
+
+private double calculateDistance(Point p1, Point p2) {
+    double speedDiff = p1.speed - p2.speed;
+    double travelTimeDiff = p1.travelTime - p2.travelTime;
+    return Math.sqrt(speedDiff * speedDiff + travelTimeDiff * travelTimeDiff);
+}
+
+private static class Point {
+    double speed;
+    double travelTime;
+
+    Point(double speed, double travelTime) {
+        this.speed = speed;
+        this.travelTime = travelTime;
+    }
+}
+
 
     // Reducer
     public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
@@ -48,29 +162,34 @@ public class LOFMapReduce {
                 // Process DataRecord instances
                 List<DataRecord> dataRecords = new ArrayList<>();
                 List<Double> lofScores = new ArrayList<>();
-                List<String> boroughs = new ArrayList<>();
 
                 for (Text value : values) {
                     DataRecord dataRecord = DataRecord.fromString(value.toString());
                     dataRecords.add(dataRecord);
 
-                    // Assume LOF scores and boroughs are printed by the Python script
+                    // Parse the LOF score from the value
                     String[] parts = value.toString().split(",");
                     double lofScore = Double.parseDouble(parts[3]);
-                    String borough = parts[4];
-
                     lofScores.add(lofScore);
-                    boroughs.add(borough);
                 }
 
-                // Perform the final aggregation
-                for (int i = 0; i < dataRecords.size(); i++) {
-                    String borough = boroughs.get(i);
-                    double lofScore = lofScores.get(i);
+                // Categorize LOF scores and count occurrences
+                int countLe1 = 0;
+                int countGt1 = 0;
+                int countNa = 0;
 
-                    // Emit the data record along with its borough and LOF score
-                    context.write(new Text(borough), new Text(dataRecords.get(i).toString() + "," + lofScore));
+                for (double lofScore : lofScores) {
+                    if (Double.isNaN(lofScore)) {
+                        countNa++;
+                    } else if (lofScore <= 1.0) {
+                        countLe1++;
+                    } else {
+                        countGt1++;
+                    }
                 }
+
+                // Emit the final aggregation for the unique borough
+                context.write(key, new Text("count_le1:" + countLe1 + ",count_gt1:" + countGt1 + ",count_na:" + countNa));
             }
         }
     }
