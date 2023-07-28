@@ -13,6 +13,7 @@ $ hadoop classpath
 $ nano LOFAnomalyDetection.java
 $ mkdir lib
 $ cd lib
+-- download and retrieve the lack file
 $ wget https://archive.apache.org/dist/commons/csv/binaries/commons-csv-1.8-bin.zip
 $ wget https://archive.apache.org/dist/commons/math/binaries/commons-math3-3.6.1-bin.zip
 $ unzip commons-csv-1.8-bin.zip
