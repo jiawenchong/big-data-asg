@@ -10,6 +10,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -78,81 +79,105 @@ public class LOFMapReduce {
         }
 
         // LOF algorithm
-       private double[] calculateLOFScores(List<Text> dataSample) {
-    int k = 5; // The number of neighbors to consider in LOF calculation
-    double[] lofScores = new double[dataSample.size()];
+        private double[] calculateLOFScores(List<Text> dataSample) {
+            int k = 5; // The number of neighbors to consider in LOF calculation
+            double[] lofScores = new double[dataSample.size()];
 
-    // Convert data records to points with speed and travelTime attributes
-    List<Point> points = new ArrayList<>();
-    for (Text dataRecord : dataSample) {
-        String[] fields = dataRecord.toString().split(",");
-        double speed = Double.parseDouble(fields[0]);
-        double travelTime = Double.parseDouble(fields[1]);
-        Point point = new Point(speed, travelTime);
-        points.add(point);
-    }
-
-    // Calculate LOF scores for each point
-    for (int i = 0; i < points.size(); i++) {
-        Point point = points.get(i);
-        List<Double> distances = new ArrayList<>();
-
-        // Calculate distances from the point to all other points
-        for (int j = 0; j < points.size(); j++) {
-            if (i != j) {
-                Point otherPoint = points.get(j);
-                double distance = calculateDistance(point, otherPoint);
-                distances.add(distance);
+            // Convert data records to points with speed and travelTime attributes
+            List<Point> points = new ArrayList<>();
+            for (Text dataRecord : dataSample) {
+                String[] fields = dataRecord.toString().split(",");
+                double speed = Double.parseDouble(fields[0]);
+                double travelTime = Double.parseDouble(fields[1]);
+                Point point = new Point(speed, travelTime);
+                points.add(point);
             }
+
+            // Calculate mean and standard deviation for speed and travel time
+            double meanSpeed = calculateMean(points, true);
+            double stdDevSpeed = calculateStandardDeviation(points, true);
+            double meanTravelTime = calculateMean(points, false);
+            double stdDevTravelTime = calculateStandardDeviation(points, false);
+
+            // Perform data standardization for speed and travel time
+            for (int i = 0; i < points.size(); i++) {
+                Point point = points.get(i);
+                double standardizedSpeed = (point.speed - meanSpeed) / stdDevSpeed;
+                double standardizedTravelTime = (point.travelTime - meanTravelTime) / stdDevTravelTime;
+                point.setStandardizedSpeed(standardizedSpeed);
+                point.setStandardizedTravelTime(standardizedTravelTime);
+            }
+
+            // Calculate LOF scores for each point
+            for (int i = 0; i < points.size(); i++) {
+                Point point = points.get(i);
+                List<Double> distances = new ArrayList<>();
+
+                // Calculate distances from the point to all other points
+                for (int j = 0; j < points.size(); j++) {
+                    if (i != j) {
+                        Point otherPoint = points.get(j);
+                        double distance = calculateDistance(point, otherPoint);
+                        distances.add(distance);
+                    }
+                }
+
+                // Find k-nearest neighbors
+                Collections.sort(distances);
+                double kDistance = distances.get(k - 1);
+
+                // Calculate reachability distances
+                List<Double> reachabilityDistances = new ArrayList<>();
+                for (double distance : distances) {
+                    double reachabilityDistance = Math.max(distance, kDistance);
+                    reachabilityDistances.add(reachabilityDistance);
+                }
+
+                // Calculate Local Reachability Density (LRD)
+                double lrd = 0.0;
+                for (double reachabilityDistance : reachabilityDistances) {
+                    lrd += reachabilityDistance;
+                }
+                lrd = k / lrd;
+
+                // Calculate LOF score
+                double lof = 0.0;
+                for (double reachabilityDistance : reachabilityDistances) {
+                    int index = distances.indexOf(reachabilityDistance);
+                    lof += lrd / reachabilityDistances.get(index);
+                }
+                lof = lof / k;
+                lofScores[i] = lof;
+            }
+
+            return lofScores;
         }
 
-        // Find k-nearest neighbors
-        Collections.sort(distances);
-        double kDistance = distances.get(k - 1);
-
-        // Calculate reachability distances
-        List<Double> reachabilityDistances = new ArrayList<>();
-        for (double distance : distances) {
-            double reachabilityDistance = Math.max(distance, kDistance);
-            reachabilityDistances.add(reachabilityDistance);
+        private double calculateMean(List<Point> points, boolean useSpeed) {
+            double sum = 0;
+            for (Point point : points) {
+                sum += useSpeed ? point.speed : point.travelTime;
+            }
+            return sum / points.size();
         }
 
-        // Calculate Local Reachability Density (LRD)
-        double lrd = 0.0;
-        for (double reachabilityDistance : reachabilityDistances) {
-            lrd += reachabilityDistance;
+        private double calculateStandardDeviation(List<Point> points, boolean useSpeed) {
+            double mean = calculateMean(points, useSpeed);
+            double sumSquaredDiff = 0;
+            for (Point point : points) {
+                double diff = (useSpeed ? point.speed : point.travelTime) - mean;
+                sumSquaredDiff += diff * diff;
+            }
+            double variance = sumSquaredDiff / points.size();
+            return Math.sqrt(variance);
         }
-        lrd = k / lrd;
 
-        // Calculate LOF score
-        double lof = 0.0;
-        for (double reachabilityDistance : reachabilityDistances) {
-            int index = distances.indexOf(reachabilityDistance);
-            lof += lrd / reachabilityDistances.get(index);
+        private double calculateDistance(Point p1, Point p2) {
+            double speedDiff = p1.standardizedSpeed - p2.standardizedSpeed;
+            double travelTimeDiff = p1.standardizedTravelTime - p2.standardizedTravelTime;
+            return Math.sqrt(speedDiff * speedDiff + travelTimeDiff * travelTimeDiff);
         }
-        lof = lof / k;
-        lofScores[i] = lof;
     }
-
-    return lofScores;
-}
-
-private double calculateDistance(Point p1, Point p2) {
-    double speedDiff = p1.speed - p2.speed;
-    double travelTimeDiff = p1.travelTime - p2.travelTime;
-    return Math.sqrt(speedDiff * speedDiff + travelTimeDiff * travelTimeDiff);
-}
-
-private static class Point {
-    double speed;
-    double travelTime;
-
-    Point(double speed, double travelTime) {
-        this.speed = speed;
-        this.travelTime = travelTime;
-    }
-}
-
 
     // Reducer
     public static class LOFReducer extends Reducer<Text, Text, Text, Text> {
