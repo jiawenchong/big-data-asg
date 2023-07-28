@@ -29,15 +29,14 @@ public class LOFMapReduce {
                 return;
             }
 
-            // Split the input value (CSV line) into its fields
+            // Split the input value
             String[] fields = value.toString().split(",");
 
-            // Assuming the CSV format is "speed, travelTime, borough"
             double speed = Double.parseDouble(fields[0]);
             double travelTime = Double.parseDouble(fields[1]);
             String borough = fields[2];
 
-            // Emit the data record with the borough as key and the values as text
+            // Emit the data record with the borough
             context.write(new Text(borough), value);
 
             // Add the data record to the sampled data list
