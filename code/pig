@@ -62,11 +62,14 @@ $ cat part-m-00001 | less
 $ pip install scikit-learn
 $ nano lof.py
 $ python3 lof.py
-$ cd IST3134/anomalies1.csv
+$ cd IST3134/anomalies.csv
 $ cat part-r-00000 | less
 $ cat part-r-00001 | less
 $ nano lof1.py
 $ python3 lof1.py
+$ cd IST3134/anomalies1.csv
+$ cat part-r-00000 | less
+$ cat part-r-00001 | less
 $ nano combine.py
 $ python3 combine.py
 $ cat outpig_combined.csv
