@@ -39,24 +39,3 @@ data_sample_copy["lof_category"] = np.where(np.isnan(lof_scores), "count_na",
 
 # Specify the output file path
 output_file = '/home/hadoop/IST3134/outputpig.csv'
-
-# Write results to CSV file
-data_sample_copy.to_csv(output_file, index=False)
-
-# Perform data manipulations and save the final result to CSV file
-data_sample_copy["BOROUGH"] = data_sample["BOROUGH"].str.upper()
-
-result = data_sample_copy.groupby("BOROUGH").agg(
-    count_leq1=pd.NamedAgg(column="lof_score", aggfunc=lambda x: sum(x <= 1)),
-    count_gt1=pd.NamedAgg(column="lof_score", aggfunc=lambda x: sum(x > 1)),
-    count_na=pd.NamedAgg(column="has_na", aggfunc="sum")
-).reset_index()
-
-# Print the result (optional)
-print(result)
-
-# Write the final result to CSV file
-output_result_file = "/home/hadoop/IST3134/outpig.csv"
-result.to_csv(output_result_file, index=False)
-
-print("Result saved to:", output_result_file)
