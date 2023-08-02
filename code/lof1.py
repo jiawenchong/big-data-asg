@@ -16,9 +16,20 @@ data_sample = shuffle(data_df, random_state=123)[:sample_size]
 
 # Run the LOF algorithm on the data sample
 data_for_lof = data_sample[["SPEED", "TRAVEL_TIME"]]
+
+# Measure the start time
+start_time = time.time()
+
 lof_model = LOF(n_neighbors=5)
 lof_model.fit(data_for_lof)
 lof_scores = lof_model.decision_scores_
+
+# Measure the end time
+end_time = time.time()
+
+# Calculate the elapsed time
+execution_time = end_time - start_time
+print("Time Taken: {:.2f} seconds".format(execution_time))
 
 # Add the LOF scores to the DataFrame
 data_sample["lof_score"] = lof_scores
