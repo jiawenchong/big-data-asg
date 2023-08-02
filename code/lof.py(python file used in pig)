@@ -24,7 +24,7 @@ lof_scores = lof_model.decision_scores_
 data_sample["lof_score"] = lof_scores
 
 # Specify the output file path
-output_file = '/home/hadoop/IST3134/anomalies1.csv'
+output_file = '/home/hadoop/IST3134/anomalies.csv'
 
 # Write results to CSV file
 data_sample.to_csv(output_file, index=False)
