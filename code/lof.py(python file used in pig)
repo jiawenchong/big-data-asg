@@ -30,7 +30,7 @@ end_time = time.time()
 
 # Calculate the elapsed time
 execution_time = end_time - start_time
-print("Execution time: {:.2f} seconds".format(execution_time))
+print("Time taken: {:.2f} seconds".format(execution_time))
 
 # Add the LOF scores to the DataFrame
 data_sample["lof_score"] = lof_scores
